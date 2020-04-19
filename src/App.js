@@ -45,7 +45,15 @@ const App = () => {
                       <h1>{item_obj.title}</h1>
                       <p>size: {item_size}</p>
                       <p>price: {item_obj.price.toFixed(2)}</p>
-                      <button>remove</button>
+
+                      <button onClick={() => {
+                        var i = items.indexOf(item);
+                        items.splice(i, 1);
+                        setItems(items);
+                        setIsOpen(false);
+                      }}>
+                        remove
+                      </button>
                     </li>
                   )
                 })}
@@ -101,7 +109,7 @@ const App = () => {
                   </Button.Group>
                 </Card.Footer>
                 <Card.Footer>
-                  <Button onClick={() => {setItems(items.concat(product.sku + ' ' + size)); setIsOpen(true)}}>
+                  <Button onClick={() => { setItems(items.concat(product.sku + ' ' + size)); setIsOpen(true) }}>
                     Buy
                   </Button>
                 </Card.Footer>
