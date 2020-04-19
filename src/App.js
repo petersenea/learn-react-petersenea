@@ -25,35 +25,33 @@ const App = () => {
 
   return (
     <Column.Group>
-      <Column size={4}>
+      <Column size={1}>
         <Sidebar
           sidebar={
-            // <div>
-            //   <button onClick={() => setIsOpen(false)}>Close Cart</button>
-            //   <ul>
-            //     {items.map(item => {
-            //       var item_split = item.split(" ");
-            //       var item_sku = item_split[0];
-            //       var item_size = item_split[1];
+            <div>
+              <button onClick={() => setIsOpen(false)}>Close Cart</button>
+              <ul>
+                {items.map(item => {
+                  var item_split = item.split(" ");
+                  var item_sku = item_split[0];
+                  var item_size = item_split[1];
 
-            //       var item_obj = products.find(element => element.sku == item_sku)
+                  var item_obj = products.find(element => element.sku == item_sku)
 
-            //       total_price += item_obj.price;
+                  total_price += item_obj.price;
 
-            //       return (
-            //         <li>
-            //           <h1>{item_obj.title}</h1>
-            //           <p>size: {item_size}</p>
-            //           <p>price: {item_obj.price.toFixed(2)}</p>
-            //           <button>remove</button>
-            //         </li>
-            //       )
-            //     })}
-            //   </ul>
-            //   <h1>Total: {total_price.toFixed(2)} </h1>
-            // </div>
-
-            <button onClick={() => setIsOpen(false)}>Close Cart</button>
+                  return (
+                    <li>
+                      <h1>{item_obj.title}</h1>
+                      <p>size: {item_size}</p>
+                      <p>price: {item_obj.price.toFixed(2)}</p>
+                      <button>remove</button>
+                    </li>
+                  )
+                })}
+              </ul>
+              <h1>Total: {total_price.toFixed(2)} </h1>
+            </div>
           }
           open={isOpen}
           // onSetOpen={() => {setIsOpen(true)}}
