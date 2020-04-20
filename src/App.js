@@ -9,8 +9,113 @@ const App = () => {
   const products = Object.values(data);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [size, setSize] = useState("S");
+  const [size, setSize] = useState("");
   const [items, setItems] = useState([]);
+
+  const [inventory, setInventory] = useState({
+    "12064273040195392": {
+      "S": 0,
+      "M": 3,
+      "L": 1,
+      "XL": 2
+    },
+    "51498472915966370": {
+      "S": 0,
+      "M": 2,
+      "L": 3,
+      "XL": 2
+    },
+    "10686354557628304": {
+      "S": 1,
+      "M": 2,
+      "L": 2,
+      "XL": 1
+    },
+    "11033926921508488": {
+      "S": 3,
+      "M": 2,
+      "L": 0,
+      "XL": 1
+    },
+    "39876704341265610": {
+      "S": 0,
+      "M": 0,
+      "L": 0,
+      "XL": 0
+    },
+    "10412368723880252": {
+      "S": 3,
+      "M": 2,
+      "L": 2,
+      "XL": 2
+    },
+    "8552515751438644": {
+      "S": 2,
+      "M": 0,
+      "L": 0,
+      "XL": 2
+    },
+    "18644119330491310": {
+      "S": 3,
+      "M": 3,
+      "L": 2,
+      "XL": 0
+    },
+    "11854078013954528": {
+      "S": 1,
+      "M": 1,
+      "L": 1,
+      "XL": 0
+    },
+    "876661122392077": {
+      "S": 3,
+      "M": 1,
+      "L": 0,
+      "XL": 1
+    },
+    "9197907543445676": {
+      "S": 3,
+      "M": 3,
+      "L": 1,
+      "XL": 2
+    },
+    "10547961582846888": {
+      "S": 2,
+      "M": 2,
+      "L": 0,
+      "XL": 0
+    },
+    "6090484789343891": {
+      "S": 2,
+      "M": 0,
+      "L": 2,
+      "XL": 3
+    },
+    "18532669286405344": {
+      "S": 2,
+      "M": 3,
+      "L": 0,
+      "XL": 2
+    },
+    "5619496040738316": {
+      "S": 1,
+      "M": 3,
+      "L": 3,
+      "XL": 2
+    },
+    "11600983276356164": {
+      "S": 3,
+      "M": 3,
+      "L": 3,
+      "XL": 1
+    },
+    "27250082398145996": {
+      "S": 1,
+      "M": 0,
+      "L": 0,
+      "XL": 2
+    }
+  });
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,7 +134,7 @@ const App = () => {
         <Sidebar
           sidebar={
             <div>
-              <button onClick={() => setIsOpen(false)}>Close Cart</button>
+              <button onClick={() => {setIsOpen(false); setSize("")}}>Close Cart</button>
               <ul>
                 {items.map(item => {
                   var item_split = item.split(" ");
@@ -49,8 +154,11 @@ const App = () => {
                       <button onClick={() => {
                         var i = items.indexOf(item);
                         items.splice(i, 1);
+                        setSize("");
                         setItems(items);
                         setIsOpen(false);
+                        inventory[item_sku][item_size] = inventory[item_sku][item_size] + 1;
+                        setInventory(inventory);
                       }}>
                         remove
                       </button>
@@ -71,51 +179,80 @@ const App = () => {
       </Column>
       <Column>
         <Column.Group multiline={true}>
-          {products.map(product =>
-            <Column size="one-quarter">
-              <Card>
-                <Card.Image>
-                  <img src={"data/products/" + product.sku + "_2.jpg"} alt="product"></img>
-                </Card.Image>
-                <Card.Footer>
-                  <h1>
-                    Title: {product.title}
-                  </h1>
-                </Card.Footer>
-                <Card.Footer>
-                  <h1>
-                    Description: {product.description !== '' ? product.description : "N/A"}
-                  </h1>
-                </Card.Footer>
-                <Card.Footer>
-                  <h1>
-                    $ {product.price.toFixed(2)}
-                  </h1>
-                </Card.Footer>
-                <Card.Footer>
-                  <Button.Group>
-                    <Button onClick={() => setSize("S")}>
-                      S
+          {
+            products.map(product =>
+              <Column size="one-quarter">
+                <Card>
+                  <Card.Image>
+                    <img src={"data/products/" + product.sku + "_2.jpg"} alt="product"></img>
+                  </Card.Image>
+                  <Card.Footer>
+                    <h1>
+                      Title: {product.title}
+                    </h1>
+                  </Card.Footer>
+                  <Card.Footer>
+                    <h1>
+                      Description: {product.description !== '' ? product.description : "N/A"}
+                    </h1>
+                  </Card.Footer>
+                  <Card.Footer>
+                    <h1>
+                      $ {product.price.toFixed(2)}
+                    </h1>
+                  </Card.Footer>
+                  <Card.Footer>
+                    <Button.Group>
+
+                      {(inventory[product.sku]["S"] > 0) ?
+                        <Button id={product.sku + " S"} onClick={() => setSize("S")}>
+                          S
                     </Button>
-                    <Button onClick={() => setSize("M")}>
-                      M
+                        :
+                        null}
+
+                      {(inventory[product.sku]["M"] > 0) ?
+                        <Button id={product.sku + " M"} onClick={() => setSize("M")}>
+                          M
                     </Button>
-                    <Button onClick={() => setSize("L")}>
-                      L
+                        :
+                        null}
+
+                      {(inventory[product.sku]["L"] > 0) ?
+                        <Button id={product.sku + " L"} onClick={() => setSize("L")}>
+                          L
                     </Button>
-                    <Button onClick={() => setSize("XL")}>
-                      XL
+                        :
+                        null}
+                      {(inventory[product.sku]["XL"] > 0) ?
+                        <Button id={product.sku + " XL"} onClick={() => setSize("XL")}>
+                          XL
                     </Button>
-                  </Button.Group>
-                </Card.Footer>
-                <Card.Footer>
-                  <Button onClick={() => { setItems(items.concat(product.sku + ' ' + size)); setIsOpen(true) }}>
-                    Buy
+                        :
+                        null}
+                      {(inventory[product.sku]["S"] + inventory[product.sku]["M"] + inventory[product.sku]["L"] + inventory[product.sku]["XL"] === 0) ?
+                        <Button disabled>Out of Stock</Button>
+                        :
+                        null}
+
+                    </Button.Group>
+                  </Card.Footer>
+                  <Card.Footer>
+                    <Button onClick={() => {
+                      if (size !== ""){
+                      setItems(items.concat(product.sku + ' ' + size));
+                      setIsOpen(true);
+                      inventory[product.sku][size] = inventory[product.sku][size] - 1
+                      setInventory(inventory)
+                      }
+                    }}>
+                      Buy
                   </Button>
-                </Card.Footer>
-              </Card>
-            </Column>
-          )}
+                  </Card.Footer>
+                </Card>
+              </Column>
+            )
+          }
         </Column.Group>
       </Column>
     </Column.Group>
