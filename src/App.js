@@ -32,6 +32,8 @@ const uiConfig = {
 
 var cart_items = [];
 
+// firebase.auth().signOut();
+
 
 const App = () => {
   const [data, setData] = useState({});
@@ -122,12 +124,19 @@ const App = () => {
               // setItems(items.concat(user_cart["cart"]));
 
               var cart = items;
+
+              if (cart.length == 0) {
+                cart_items = [];
+              }
+              // if (cart.length != 0) {
               // console.log("items", items);
               var cart_things = user_cart["cart"];
 
               for (var i = 0; i < cart_things.length; i++) {
                 var things = cart_things[i].split(' ');
                 var j = cart_items.indexOf(things[0] + ' ' + things[1]);
+                // var j = cart.indexOf(things[0] + ' ' + things[1]);
+
                 var new_quant;
                 if (j == -1) {
                   cart_items = cart_items.concat(things[0] + ' ' + things[1]);
@@ -136,48 +145,18 @@ const App = () => {
                   cart = cart.concat(new_item);
                 }
                 else {
+                  console.log(cart);
+                  console.log(cart_items);
                   var stuff = cart[j].split(' ');
                   new_quant = parseInt(stuff[2], 10) + parseInt(things[2], 10);
                   cart[j] = things[0] + ' ' + things[1] + ' ' + new_quant;
                 }
                 setItems(cart);
-
               }
 
+              // }
 
 
-              // console.log(cart_items);
-              // if (size !== "") {
-              //   var cart = items;
-              //   var i = cart_items.indexOf(product.sku + ' ' + size);
-              //   console.log(i);
-              //   var new_quant;
-              //   if (i == -1) {
-              //     cart_items = cart_items.concat(product.sku + ' ' + size);
-              //     new_quant = 1;
-              //     var new_item = product.sku + ' ' + size + ' ' + new_quant;
-              //     cart = cart.concat(new_item);
-              //   }
-              //   else {
-              //     var things = cart[i].split(' ');
-              //     new_quant = parseInt(things[2], 10) + 1;
-              //     cart[i] = product.sku + ' ' + size + ' ' + new_quant;
-              //   }
-
-              //   // var cart = items.concat(product.sku + ' ' + size)
-              //   setItems(cart);
-              //   if (user != null) {
-              //     firebase.database().ref('carts/' + user.uid).set({
-              //       cart
-              //     });
-              //   };
-              //   inventory[product.sku][size] = inventory[product.sku][size] - 1;
-              //   setInventory(inventory);
-
-
-
-
-              // console.log(cart);
               for (let i = 0; i < cart.length; i++) {
                 var item = cart[i];
                 var item_split = item.split(" ");
@@ -200,7 +179,7 @@ const App = () => {
                 if (inventory != null) {
                   inventory[item_sku][item_size] = inventory[item_sku][item_size] - item_quant;
 
-                  if (inventory[item_sku][item_size] < 0){
+                  if (inventory[item_sku][item_size] < 0) {
                     setCartState(false);
                   }
 
@@ -210,7 +189,7 @@ const App = () => {
                 else {
                   inv[item_sku][item_size] = inv[item_sku][item_size] - item_quant;
 
-                  if (inv[item_sku][item_size] < 0){
+                  if (inv[item_sku][item_size] < 0) {
                     setCartState(false);
                   }
 
@@ -219,10 +198,13 @@ const App = () => {
                 }
 
               };
-              setIsOpen(true);
+
 
             }
+
           }
+          setIsOpen(true);
+
         }
         else {
           cart_items = [];
@@ -231,10 +213,22 @@ const App = () => {
         setTrueInventory(true_inventory);
       }
     };
-    db.once('value', handleData, error => alert(error));
+    db.on('value', handleData, error => alert(error));
     return () => { db.off('value', handleData); };
 
   }, [user]);
+
+  // useEffect(() => {
+  //   var cart_st = true;
+  //   for (var k = 0; k < items.length; k++) {
+  //     var things = items[k].split(' ');
+  //     if (inventory[things[0]][things[1]] < 0) {
+  //       cart_st = false;
+  //     }
+  //   }
+  //   setCartState(cart_st);
+
+  // }, [isOpen]);
 
   // useEffect(() => {
 
@@ -287,12 +281,13 @@ const App = () => {
 
                         total_price += item_obj.price * item_quant;
                         // console.log("trueinv", trueInventory[item_sku][item_size]);
-                        
+
                         // var cart_state = cartState;
 
                         // if (inventory[item_sku][item_size] < 0) {
                         //   cart_state = false;
                         // }
+                        // setCartState(cart_state);
 
                         return (
                           <li>
@@ -315,7 +310,7 @@ const App = () => {
                               items.splice(i, 1);
 
                               var cart_st = true;
-                              for (var k = 0; k < items.length; k++){
+                              for (var k = 0; k < items.length; k++) {
                                 var things = items[k].split(' ');
                                 if (inventory[things[0]][things[1]] < 0) {
                                   cart_st = false;
@@ -346,33 +341,41 @@ const App = () => {
                       })}
                     </ul>
                     <h1>Total: {total_price.toFixed(2)} </h1>
-                    {cartState ? 
-                    <button>Check out</button>
-                    :
-                    <button onClick={() => {
-                      console.log("items", items);
-                      console.log("cart_items", cart_items);
-                      for (var i = 0; i < items.length; i++) {
-                        var things = items[i].split(' ');
-                        var item_sku = things[0];
-                        var item_size = things[1];
-                        var item_quant = parseInt(things[2], 10);
+                    {cartState ?
+                      <button onClick={() => {
+                        console.log("checkout");
 
-                        if (inventory[item_sku][item_size] < 0) {
-                          inventory[item_sku][item_size] = 0;
-                          items[i] = item_sku + ' ' + item_size + ' ' + trueInventory[item_sku][item_size];
+                        setItems([]);
 
-                        }
-                      };
-                      setInventory(inventory);
-                      setItems(items);
-                      setIsOpen(false);
-                      setCartState(true);
+                        // for (var i = 0; i < inventory.length; i++);
+                        firebase.database().ref('inventory').transaction(() => inventory);
+                        firebase.database().ref('carts/' + user.uid).transaction(() => null);
+                      }}>Check out</button>
+                      :
+                      <button onClick={() => {
+                        console.log("items", items);
+                        console.log("cart_items", cart_items);
+                        for (var i = 0; i < items.length; i++) {
+                          var things = items[i].split(' ');
+                          var item_sku = things[0];
+                          var item_size = things[1];
+                          var item_quant = parseInt(things[2], 10);
+
+                          if (inventory[item_sku][item_size] < 0) {
+                            inventory[item_sku][item_size] = 0;
+                            items[i] = item_sku + ' ' + item_size + ' ' + trueInventory[item_sku][item_size];
+
+                          }
+                        };
+                        setInventory(inventory);
+                        setItems(items);
+                        setIsOpen(false);
+                        setCartState(true);
 
 
-                    }}>Update Cart</button>
+                      }}>Update Cart</button>
                     }
-                    
+
                   </div>
                 }
                 open={isOpen}
@@ -463,6 +466,13 @@ const App = () => {
                                 });
                               };
                               inventory[product.sku][size] = inventory[product.sku][size] - 1;
+
+                              if (inventory[product.sku][size] < 0) {
+                                setCartState(false);
+                              }
+
+                              console.log("cart_items", cart_items);
+                              console.log("items", items);
 
                               setInventory(inventory);
                               setIsOpen(true);
