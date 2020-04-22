@@ -30,6 +30,9 @@ const uiConfig = {
   }
 };
 
+var cart_items = [];
+
+
 const App = () => {
   const [data, setData] = useState({});
   const products = Object.values(data);
@@ -42,9 +45,14 @@ const App = () => {
 
   const [user, setUser] = useState(null);
 
+  const [trueInventory, setTrueInventory] = useState(null);
+
+  const [cartState, setCartState] = useState(true);
+
+
   const Banner = ({ user }) => (
     <React.Fragment>
-      {user ? <Welcome user={user} /> : null}
+      {user ? <Welcome user={user} /> : <SignIn />}
       {/* <Title>{ title || '[loading...]' }</Title> */}
     </React.Fragment>
   );
@@ -53,7 +61,9 @@ const App = () => {
     <Message color="info">
       <Message.Header>
         Welcome, {user.displayName}
-        <Button primary onClick={() => firebase.auth().signOut()}>
+        {/* <Button primary onClick={() => { setUser(null); setItems([]); firebase.auth().signOut() }}> */}
+        <Button primary onClick={() => { setItems([]); firebase.auth().signOut() }}>
+
           Log out
         </Button>
       </Message.Header>
@@ -80,147 +90,396 @@ const App = () => {
     fetchProducts();
   }, []);
 
+  // useEffect(() => {
+  //   console.log("hello");
+  //   const handleData = snap => {
+  //     if (snap.val()) {
+  //       // true_inventory = snap.val()["inventory"];
+  //       setInventory(snap.val()["inventory"]);
+  //     }
+  //     // console.log(snap.val())
+  //   }
+  //   db.on('value', handleData, error => alert(error));
+  //   return () => { db.off('value', handleData); };
+  // }, []);
+
   useEffect(() => {
-    console.log("hello");
     const handleData = snap => {
-      if (snap.val()) setInventory(snap.val());
-      // console.log(snap.val())
-    }
-    db.on('value', handleData, error => alert(error));
+      if (snap.val()) {
+        console.log("user change")
+        var true_inventory = snap.val()["inventory"];
+        var inv = snap.val()["inventory"];
+        // setInventory(snap.val()["inventory"]);
+
+        if (user != null) {
+          var carts = snap.val()["carts"]
+          if (carts != null) {
+            var user_cart = snap.val()["carts"][user.uid];
+            // var inv = snap.val()["inventory"];
+            if (user_cart != null) {
+              // console.log("potato")
+              // console.log(snap.val()["carts"][user.uid]["cart"])
+              // setItems(items.concat(user_cart["cart"]));
+
+              var cart = items;
+              // console.log("items", items);
+              var cart_things = user_cart["cart"];
+
+              for (var i = 0; i < cart_things.length; i++) {
+                var things = cart_things[i].split(' ');
+                var j = cart_items.indexOf(things[0] + ' ' + things[1]);
+                var new_quant;
+                if (j == -1) {
+                  cart_items = cart_items.concat(things[0] + ' ' + things[1]);
+                  new_quant = parseInt(things[2], 10);
+                  var new_item = things[0] + ' ' + things[1] + ' ' + new_quant;
+                  cart = cart.concat(new_item);
+                }
+                else {
+                  var stuff = cart[j].split(' ');
+                  new_quant = parseInt(stuff[2], 10) + parseInt(things[2], 10);
+                  cart[j] = things[0] + ' ' + things[1] + ' ' + new_quant;
+                }
+                setItems(cart);
+
+              }
+
+
+
+              // console.log(cart_items);
+              // if (size !== "") {
+              //   var cart = items;
+              //   var i = cart_items.indexOf(product.sku + ' ' + size);
+              //   console.log(i);
+              //   var new_quant;
+              //   if (i == -1) {
+              //     cart_items = cart_items.concat(product.sku + ' ' + size);
+              //     new_quant = 1;
+              //     var new_item = product.sku + ' ' + size + ' ' + new_quant;
+              //     cart = cart.concat(new_item);
+              //   }
+              //   else {
+              //     var things = cart[i].split(' ');
+              //     new_quant = parseInt(things[2], 10) + 1;
+              //     cart[i] = product.sku + ' ' + size + ' ' + new_quant;
+              //   }
+
+              //   // var cart = items.concat(product.sku + ' ' + size)
+              //   setItems(cart);
+              //   if (user != null) {
+              //     firebase.database().ref('carts/' + user.uid).set({
+              //       cart
+              //     });
+              //   };
+              //   inventory[product.sku][size] = inventory[product.sku][size] - 1;
+              //   setInventory(inventory);
+
+
+
+
+              // console.log(cart);
+              for (let i = 0; i < cart.length; i++) {
+                var item = cart[i];
+                var item_split = item.split(" ");
+                var item_sku = item_split[0];
+                var item_size = item_split[1];
+                // var item_quant = item_split[2];
+                var item_quant = parseInt(item_split[2], 10);
+
+
+                // var item_obj = products.find(element => element.sku == item_sku)
+
+                // total_price += item_obj.price * item_quant;
+
+                // inventory[item_sku][item_size] = inventory[item_sku][item_size] - item_quant;
+
+                // setInventory(inventory);
+                // console.log(inventory);
+
+                // console.log(inventory);
+                if (inventory != null) {
+                  inventory[item_sku][item_size] = inventory[item_sku][item_size] - item_quant;
+
+                  if (inventory[item_sku][item_size] < 0){
+                    setCartState(false);
+                  }
+
+                  setInventory(inventory);
+                  // console.log(inventory);
+                }
+                else {
+                  inv[item_sku][item_size] = inv[item_sku][item_size] - item_quant;
+
+                  if (inv[item_sku][item_size] < 0){
+                    setCartState(false);
+                  }
+
+                  setInventory(inv);
+                  // console.log(inv);
+                }
+
+              };
+              setIsOpen(true);
+
+            }
+          }
+        }
+        else {
+          cart_items = [];
+          setInventory(inv);
+        }
+        setTrueInventory(true_inventory);
+      }
+    };
+    db.once('value', handleData, error => alert(error));
     return () => { db.off('value', handleData); };
-  }, []);
+
+  }, [user]);
+
+  // useEffect(() => {
+
+  //   for (let i = 0; i < items.length; i++){
+  //     var item = items[i];
+  //     var item_split = item.split(" ");
+  //     var item_sku = item_split[0];
+  //     var item_size = item_split[1];
+  //     var item_quant = item_split[2];
+
+  //     // var item_obj = products.find(element => element.sku == item_sku)
+
+  //     // total_price += item_obj.price * item_quant;
+  //     inventory[item_sku][item_size] = inventory[item_sku][item_size] - item_quant;
+  //     setInventory(inventory);
+
+  //   }
+
+  // }, [user]);
+
 
   var total_price = 0;
+  // firebase.auth().signOut();
 
   return (
 
     (inventory === null) ? null :
 
-      (user) ?
+
+      <Container>
+        <Banner user={user} />
         <Container>
-          <Banner user={user} />
-          <Container>
-            <Column.Group>
-              <Column size={1}>
-                <Sidebar
-                  sidebar={
-                    <div>
-                      <button onClick={() => { setIsOpen(false); setSize("") }}>Close Cart</button>
-                      <ul>
-                        {items.map(item => {
-                          var item_split = item.split(" ");
-                          var item_sku = item_split[0];
-                          var item_size = item_split[1];
+          <Column.Group>
+            <Column size={1}>
+              <Sidebar
+                sidebar={
+                  <div>
+                    <button onClick={() => { setIsOpen(false); setSize("") }}>Close Cart</button>
+                    <ul>
+                      {items.map(item => {
 
-                          var item_obj = products.find(element => element.sku == item_sku)
+                        var item_split = item.split(" ");
+                        var item_sku = item_split[0];
+                        var item_size = item_split[1];
+                        // var item_quant = item_split[2];
+                        var item_quant = parseInt(item_split[2], 10);
 
-                          total_price += item_obj.price;
 
-                          return (
-                            <li>
-                              <h1>{item_obj.title}</h1>
-                              <p>size: {item_size}</p>
-                              <p>price: {item_obj.price.toFixed(2)}</p>
+                        var item_obj = products.find(element => element.sku == item_sku)
 
-                              <button onClick={() => {
-                                var i = items.indexOf(item);
-                                items.splice(i, 1);
-                                setSize("");
-                                setItems(items);
-                                setIsOpen(false);
-                                inventory[item_sku][item_size] = inventory[item_sku][item_size] + 1;
-                                setInventory(inventory);
-                              }}>
-                                remove
-                      </button>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                      <h1>Total: {total_price.toFixed(2)} </h1>
-                    </div>
-                  }
-                  open={isOpen}
-                  // onSetOpen={() => {setIsOpen(true)}}
-                  styles={{ sidebar: { background: "white", width: "200px" } }}>
-                  <button onClick={() => setIsOpen(true)}>
-                    Open Cart
-          </button>
-                </Sidebar>
-              </Column>
-              <Column>
-                <Column.Group multiline={true}>
-                  {
-                    products.map(product =>
-                      <Column size="one-quarter">
-                        <Card>
-                          <Card.Image>
-                            <img src={"data/products/" + product.sku + "_2.jpg"} alt="product"></img>
-                          </Card.Image>
-                          <Card.Footer>
-                            <h1>
-                              Title: {product.title}
-                            </h1>
-                          </Card.Footer>
-                          <Card.Footer>
-                            <h1>
-                              Description: {product.description !== '' ? product.description : "N/A"}
-                            </h1>
-                          </Card.Footer>
-                          <Card.Footer>
-                            <h1>
-                              $ {product.price.toFixed(2)}
-                            </h1>
-                          </Card.Footer>
-                          <Card.Footer>
-                            <Button.Group>
+                        total_price += item_obj.price * item_quant;
+                        // console.log("trueinv", trueInventory[item_sku][item_size]);
+                        
+                        // var cart_state = cartState;
 
-                              {(inventory[product.sku]["S"] > 0) ?
-                                <Button id={product.sku + " S"} onClick={() => setSize("S")}> S </Button>
-                                :
-                                null}
+                        // if (inventory[item_sku][item_size] < 0) {
+                        //   cart_state = false;
+                        // }
 
-                              {(inventory[product.sku]["M"] > 0) ?
-                                <Button id={product.sku + " M"} onClick={() => setSize("M")}> M </Button>
-                                :
-                                null}
+                        return (
+                          <li>
+                            <h1>{item_obj.title}</h1>
+                            <p>size: {item_size}</p>
+                            <p>quantity: {item_quant}</p>
+                            <p>price: {(item_obj.price * item_quant).toFixed(2)}</p>
 
-                              {(inventory[product.sku]["L"] > 0) ?
-                                <Button id={product.sku + " L"} onClick={() => setSize("L")}> L </Button>
-                                :
-                                null}
-                              {(inventory[product.sku]["XL"] > 0) ?
-                                <Button id={product.sku + " XL"} onClick={() => setSize("XL")}> XL </Button>
-                                :
-                                null}
-                              {(inventory[product.sku]["S"] + inventory[product.sku]["M"] + inventory[product.sku]["L"] + inventory[product.sku]["XL"] === 0) ?
-                                <Button disabled>Out of Stock</Button>
-                                :
-                                null}
+                            {inventory[item_sku][item_size] < 0 ?
+                              <h1 style={{ color: "red" }}>Only {trueInventory[item_sku][item_size]} left!</h1>
+                              // <h1 style={{color: "red"}}>AHH</h1>
+                              :
+                              null}
 
-                            </Button.Group>
-                          </Card.Footer>
-                          <Card.Footer>
-                            <Button onClick={() => {
-                              if (size !== "") {
-                                setItems(items.concat(product.sku + ' ' + size));
-                                setIsOpen(true);
-                                inventory[product.sku][size] = inventory[product.sku][size] - 1
-                                setInventory(inventory)
+                            <button onClick={() => {
+                              var j = cart_items.indexOf(item_sku + ' ' + item_size);
+                              cart_items.splice(j, 1);
+
+                              var i = items.indexOf(item);
+                              items.splice(i, 1);
+
+                              var cart_st = true;
+                              for (var k = 0; k < items.length; k++){
+                                var things = items[k].split(' ');
+                                if (inventory[things[0]][things[1]] < 0) {
+                                  cart_st = false;
+                                }
                               }
-                            }}> Buy </Button>
-                          </Card.Footer>
-                        </Card>
-                      </Column>
-                    )
-                  }
-                </Column.Group>
-              </Column>
-            </Column.Group>
-          </Container>
-        </Container>
+                              setCartState(cart_st);
 
-        : <SignIn />
+                              setSize("");
+                              setItems(items);
+                              setIsOpen(false);
+                              if (inventory[item_sku][item_size] < 0) {
+                                inventory[item_sku][item_size] = trueInventory[item_sku][item_size];
+                              }
+                              else {
+
+                                inventory[item_sku][item_size] = inventory[item_sku][item_size] + item_quant;
+                              }
+                              // console.log(inventory[item_sku][item_size]);
+                              setInventory(inventory);
+                              if (user != null) {
+                                firebase.database().ref('carts/' + user.uid).set({
+                                  cart: items
+                                });
+                              };
+                            }}>remove</button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                    <h1>Total: {total_price.toFixed(2)} </h1>
+                    {cartState ? 
+                    <button>Check out</button>
+                    :
+                    <button onClick={() => {
+                      console.log("items", items);
+                      console.log("cart_items", cart_items);
+                      for (var i = 0; i < items.length; i++) {
+                        var things = items[i].split(' ');
+                        var item_sku = things[0];
+                        var item_size = things[1];
+                        var item_quant = parseInt(things[2], 10);
+
+                        if (inventory[item_sku][item_size] < 0) {
+                          inventory[item_sku][item_size] = 0;
+                          items[i] = item_sku + ' ' + item_size + ' ' + trueInventory[item_sku][item_size];
+
+                        }
+                      };
+                      setInventory(inventory);
+                      setItems(items);
+                      setIsOpen(false);
+                      setCartState(true);
+
+
+                    }}>Update Cart</button>
+                    }
+                    
+                  </div>
+                }
+                open={isOpen}
+                // onSetOpen={() => {setIsOpen(true)}}
+                styles={{ sidebar: { background: "white", width: "200px" } }}>
+                <button onClick={() => setIsOpen(true)}>
+                  Open Cart
+          </button>
+              </Sidebar>
+            </Column>
+            <Column>
+              <Column.Group multiline={true}>
+                {
+                  products.map(product =>
+                    <Column size="one-quarter">
+                      <Card>
+                        <Card.Image>
+                          <img src={"data/products/" + product.sku + "_2.jpg"} alt="product"></img>
+                        </Card.Image>
+                        <Card.Footer>
+                          <h1>
+                            Title: {product.title}
+                          </h1>
+                        </Card.Footer>
+                        <Card.Footer>
+                          <h1>
+                            Description: {product.description !== '' ? product.description : "N/A"}
+                          </h1>
+                        </Card.Footer>
+                        <Card.Footer>
+                          <h1>
+                            $ {product.price.toFixed(2)}
+                          </h1>
+                        </Card.Footer>
+                        <Card.Footer>
+                          <Button.Group>
+
+                            {(inventory[product.sku]["S"] > 0) ?
+                              <Button id={product.sku + " S"} onClick={() => setSize("S")}> S </Button>
+                              :
+                              null}
+
+                            {(inventory[product.sku]["M"] > 0) ?
+                              <Button id={product.sku + " M"} onClick={() => setSize("M")}> M </Button>
+                              :
+                              null}
+
+                            {(inventory[product.sku]["L"] > 0) ?
+                              <Button id={product.sku + " L"} onClick={() => setSize("L")}> L </Button>
+                              :
+                              null}
+                            {(inventory[product.sku]["XL"] > 0) ?
+                              <Button id={product.sku + " XL"} onClick={() => setSize("XL")}> XL </Button>
+                              :
+                              null}
+                            {(inventory[product.sku]["S"] + inventory[product.sku]["M"] + inventory[product.sku]["L"] + inventory[product.sku]["XL"] <= 0) ?
+                              <Button disabled>Out of Stock</Button>
+                              :
+                              null}
+
+                          </Button.Group>
+                        </Card.Footer>
+                        <Card.Footer>
+                          <Button onClick={() => {
+                            // console.log(cart_items);
+                            if (size !== "") {
+                              var cart = items;
+                              var i = cart_items.indexOf(product.sku + ' ' + size);
+                              // console.log(i);
+                              var new_quant;
+                              if (i == -1) {
+                                cart_items = cart_items.concat(product.sku + ' ' + size);
+                                new_quant = 1;
+                                var new_item = product.sku + ' ' + size + ' ' + new_quant;
+                                cart = cart.concat(new_item);
+                              }
+                              else {
+                                var things = cart[i].split(' ');
+                                new_quant = parseInt(things[2], 10) + 1;
+                                cart[i] = product.sku + ' ' + size + ' ' + new_quant;
+                              }
+
+                              // var cart = items.concat(product.sku + ' ' + size)
+                              setItems(cart);
+                              if (user != null) {
+                                firebase.database().ref('carts/' + user.uid).set({
+                                  cart
+                                });
+                              };
+                              inventory[product.sku][size] = inventory[product.sku][size] - 1;
+
+                              setInventory(inventory);
+                              setIsOpen(true);
+
+                            }
+                          }}> Buy </Button>
+                        </Card.Footer>
+                      </Card>
+                    </Column>
+                  )
+                }
+              </Column.Group>
+            </Column>
+          </Column.Group>
+        </Container>
+      </Container>
+
     // <h1>hello</h1>
 
   );
